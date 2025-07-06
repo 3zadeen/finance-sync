@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface UploadProgressModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ export default function UploadProgressModal({ isOpen, onClose }: UploadProgressM
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const queryClient = useQueryClient();
 
   const steps = [
     { label: "Parsing PDF content", icon: "fas fa-file-pdf" },
@@ -19,16 +21,23 @@ export default function UploadProgressModal({ isOpen, onClose }: UploadProgressM
     { label: "Syncing to Google Sheets", icon: "fas fa-sync" },
   ];
 
+  // Poll for transaction updates to detect when processing is complete
+  const { data: stats } = useQuery({
+    queryKey: ["/api/stats"],
+    enabled: isOpen && !isComplete,
+    refetchInterval: 1000, // Poll every second
+  });
+
   useEffect(() => {
     if (isOpen) {
       setProgress(0);
       setCurrentStep(0);
       setIsComplete(false);
       
-      // Simulate processing steps
+      // Simulate visual progress while waiting for real completion
       const timer = setInterval(() => {
         setProgress(prev => {
-          const newProgress = prev + 5;
+          const newProgress = Math.min(prev + 3, 90); // Stop at 90% until real completion
           
           // Update current step based on progress
           if (newProgress >= 25 && currentStep < 1) {
@@ -39,19 +48,24 @@ export default function UploadProgressModal({ isOpen, onClose }: UploadProgressM
             setCurrentStep(3);
           }
           
-          if (newProgress >= 100) {
-            clearInterval(timer);
-            setIsComplete(true);
-            return 100;
-          }
-          
           return newProgress;
         });
-      }, 80); // Complete in ~4.8 seconds
+      }, 200);
 
       return () => clearInterval(timer);
     }
   }, [isOpen, currentStep]);
+
+  // Check if processing is complete by monitoring transaction count
+  useEffect(() => {
+    if (stats && stats.totalTransactions > 0 && !isComplete) {
+      setProgress(100);
+      setCurrentStep(3);
+      setIsComplete(true);
+      // Invalidate all queries to refresh data
+      queryClient.invalidateQueries();
+    }
+  }, [stats, isComplete, queryClient]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

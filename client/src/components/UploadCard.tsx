@@ -54,7 +54,8 @@ export default function UploadCard({ onUploadStart }: UploadCardProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.json().catch(() => ({ message: 'Upload failed' }));
+        throw new Error(errorData.message || 'Upload failed');
       }
 
       const result = await response.json();
@@ -64,18 +65,13 @@ export default function UploadCard({ onUploadStart }: UploadCardProps) {
         description: "Your bank statement is being processed",
       });
 
-      // Simulate processing time
-      setTimeout(() => {
-        toast({
-          title: "Processing complete",
-          description: "Transactions have been categorized and synced",
-        });
-      }, 3000);
+      // The server processes in background, modal will handle completion state
 
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
-        description: "Please try again",
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
     }
