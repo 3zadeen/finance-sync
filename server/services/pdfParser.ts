@@ -1,4 +1,4 @@
-import PDFParse from 'pdf-parse';
+// Dynamic import to avoid initialization issues
 
 export interface ParsedTransaction {
   date: string;
@@ -10,6 +10,7 @@ export interface ParsedTransaction {
 export class PDFParser {
   async parseBankStatement(pdfBuffer: Buffer): Promise<ParsedTransaction[]> {
     try {
+      const PDFParse = (await import('pdf-parse')).default;
       const data = await PDFParse(pdfBuffer);
       const text = data.text;
       
