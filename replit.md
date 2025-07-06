@@ -110,6 +110,129 @@ This is a full-stack financial transaction management application that automates
 ## Changelog
 - July 06, 2025. Initial setup
 
+## Local Development Setup
+
+### Prerequisites
+- Node.js 18+ with npm
+- Git for cloning the repository
+- A PostgreSQL database (local or cloud-based like Neon)
+- OpenAI API key for transaction categorization
+- Google Cloud Console project for Sheets integration (optional)
+
+### Installation Steps
+
+1. **Clone the Repository**
+   ```bash
+   git clone <repository-url>
+   cd financial-transaction-dashboard
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Configuration**
+   Create a `.env` file in the root directory:
+   ```env
+   # Database
+   DATABASE_URL=postgresql://username:password@localhost:5432/finance_db
+   
+   # OpenAI (required for AI categorization)
+   OPENAI_API_KEY=sk-your-openai-api-key-here
+   
+   # Google Sheets Integration (optional)
+   GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
+   GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
+   ```
+
+4. **Database Setup**
+   - Install and start PostgreSQL locally, or use a cloud provider like Neon
+   - Create a database named `finance_db`
+   - Run database migrations:
+     ```bash
+     npm run db:push
+     ```
+
+5. **Start the Application**
+   ```bash
+   npm run dev
+   ```
+   The app will be available at `http://localhost:5000`
+
+### How the Backend Works
+
+**Architecture Overview:**
+- **Express.js Server**: Handles HTTP requests and serves both API endpoints and static frontend files
+- **In-Memory Storage**: Currently uses a MemStorage class for data persistence (can be switched to PostgreSQL)
+- **PDF Processing**: Uses pdf-parse library with dynamic imports to extract transaction data
+- **AI Integration**: OpenAI GPT-4o analyzes transaction descriptions and assigns categories
+- **Google Sheets API**: OAuth2 flow for connecting to user's existing spreadsheets
+
+**Key Backend Components:**
+1. **Routes** (`server/routes.ts`): All API endpoints for transactions, categories, uploads, and Google Sheets
+2. **Services**:
+   - `PDFParser`: Extracts transactions from bank statement PDFs using regex patterns
+   - `AICategorizer`: Uses OpenAI to intelligently categorize transactions
+   - `GoogleSheetsService`: Handles OAuth and spreadsheet synchronization
+3. **Storage** (`server/storage.ts`): Data layer with interfaces for users, transactions, categories
+
+**Data Flow:**
+1. User uploads PDF → Server processes with PDFParser
+2. Extracted transactions → AI categorization via OpenAI
+3. Categorized data → Stored in database/memory
+4. Optional: Auto-sync to user's Google Sheets
+
+### API Key Setup
+
+**OpenAI API Key:**
+1. Visit https://platform.openai.com/api-keys
+2. Create a new API key
+3. Add to your `.env` file as `OPENAI_API_KEY`
+
+**Google Sheets Integration:**
+1. Go to Google Cloud Console
+2. Create a new project or select existing
+3. Enable Google Sheets API and Google Drive API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URI: `http://localhost:5000/api/auth/google/callback`
+6. Copy Client ID and Secret to your `.env` file
+
+### Development Scripts
+
+```bash
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Run TypeScript type checking
+npm run check
+
+# Push database schema changes
+npm run db:push
+```
+
+### Troubleshooting
+
+**Common Issues:**
+- **PDF Parse Error**: Ensure PDFs are text-based (not scanned images)
+- **Database Connection**: Verify DATABASE_URL format and database is running
+- **OpenAI Errors**: Check API key validity and account credits
+- **Google Sheets Auth**: Verify OAuth credentials and redirect URI configuration
+
+**Port Conflicts:**
+If port 5000 is in use, the app will automatically find an available port.
+
+### Testing with Sample Data
+
+The app includes default categories and a demo user. Upload a bank statement PDF to see the full workflow in action.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
