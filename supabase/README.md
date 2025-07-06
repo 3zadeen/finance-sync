@@ -4,11 +4,13 @@ This guide covers deploying the financial transaction management app using Supab
 
 ## Architecture Overview
 
-- **Frontend**: React app deployed on Vercel
+- **Frontend**: React app deployed on Vercel (static hosting only)
 - **Database**: Supabase PostgreSQL with automatic migrations
-- **API**: Supabase Edge Functions (Deno runtime)
+- **API**: Supabase Edge Functions (Deno runtime) - no Vercel serverless functions
 - **Authentication**: Supabase Auth (optional)
 - **Storage**: Supabase Storage for file uploads
+
+> **Note**: This architecture completely separates frontend and backend concerns. Vercel only serves static files, while all API logic runs on Supabase Edge Functions.
 
 ## Setup Instructions
 

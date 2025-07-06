@@ -113,6 +113,7 @@ This is a full-stack financial transaction management application that automates
 - Implemented three Edge Functions: api, pdf-processor, google-sheets
 - Updated client to use environment variables for API configuration
 - Configured Vercel deployment for frontend-only hosting
+- Removed all Vercel serverless API code in favor of Supabase Edge Functions
 - Added comprehensive Supabase deployment documentation
 
 ## Changelog
