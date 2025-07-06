@@ -1,5 +1,10 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// API configuration - use Supabase Edge Functions in production, local server in development
+const API_BASE_URL = import.meta.env.VITE_SUPABASE_URL 
+  ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
+  : '/api';
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -12,11 +17,25 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  // Convert relative URLs to use the appropriate API base
+  const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+  
+  const headers: Record<string, string> = {};
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+  
+  // Add Supabase auth headers if using Supabase
+  if (import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    headers["apikey"] = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    headers["Authorization"] = `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`;
+  }
+
+  const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+    credentials: import.meta.env.VITE_SUPABASE_URL ? "omit" : "include",
   });
 
   await throwIfResNotOk(res);
@@ -29,8 +48,21 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
+    // Convert relative URLs to use the appropriate API base
+    const url = queryKey[0] as string;
+    const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+    
+    const headers: Record<string, string> = {};
+    
+    // Add Supabase auth headers if using Supabase
+    if (import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      headers["apikey"] = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      headers["Authorization"] = `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`;
+    }
+
+    const res = await fetch(fullUrl, {
+      headers,
+      credentials: import.meta.env.VITE_SUPABASE_URL ? "omit" : "include",
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

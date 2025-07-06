@@ -71,8 +71,20 @@ export default function GoogleSheetsCard({ isConnected, hasSpreadsheetId, onConn
     }
 
     try {
-      const response = await fetch('/api/sync-google-sheets', {
+      // Use Supabase Edge Function for Google Sheets sync in production
+      const syncUrl = import.meta.env.VITE_SUPABASE_URL 
+        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-sheets/sync`
+        : '/api/sync-google-sheets';
+      
+      const headers: Record<string, string> = {};
+      if (import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        headers["apikey"] = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        headers["Authorization"] = `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`;
+      }
+
+      const response = await fetch(syncUrl, {
         method: 'POST',
+        headers,
       });
 
       if (!response.ok) {

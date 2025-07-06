@@ -269,4 +269,9 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Export storage instance - switch between MemStorage and SupabaseStorage
+// For production, use SupabaseStorage with DATABASE_URL
+import { SupabaseStorage } from './supabaseStorage';
+
+// Use Supabase if DATABASE_URL is available, otherwise fall back to MemStorage
+export const storage = process.env.DATABASE_URL ? new SupabaseStorage() : new MemStorage();

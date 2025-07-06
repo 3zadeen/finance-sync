@@ -36,8 +36,20 @@ export default function UploadCard({ onUploadStart }: UploadCardProps) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/upload-statement', {
+      // Use Supabase Edge Function for PDF processing in production, local API in development
+      const uploadUrl = import.meta.env.VITE_SUPABASE_URL 
+        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdf-processor`
+        : '/api/upload-statement';
+      
+      const headers: Record<string, string> = {};
+      if (import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        headers["apikey"] = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        headers["Authorization"] = `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`;
+      }
+
+      const response = await fetch(uploadUrl, {
         method: 'POST',
+        headers,
         body: formData,
       });
 

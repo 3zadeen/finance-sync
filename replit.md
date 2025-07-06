@@ -107,6 +107,14 @@ This is a full-stack financial transaction management application that automates
 - Added close buttons for better user experience during and after upload
 - Improved modal responsiveness and prevented stuck states
 
+### July 06, 2025 - Supabase Migration & Edge Functions
+- Migrated from in-memory storage to Supabase PostgreSQL database
+- Created Supabase Edge Functions for serverless API layer
+- Implemented three Edge Functions: api, pdf-processor, google-sheets
+- Updated client to use environment variables for API configuration
+- Configured Vercel deployment for frontend-only hosting
+- Added comprehensive Supabase deployment documentation
+
 ## Changelog
 - July 06, 2025. Initial setup
 
@@ -232,6 +240,76 @@ If port 5000 is in use, the app will automatically find an available port.
 ### Testing with Sample Data
 
 The app includes default categories and a demo user. Upload a bank statement PDF to see the full workflow in action.
+
+## Production Deployment
+
+### Supabase + Vercel Architecture
+
+The app is designed for production deployment using:
+- **Frontend**: React app hosted on Vercel
+- **Database**: Supabase PostgreSQL with migrations
+- **API**: Supabase Edge Functions (serverless Deno runtime)
+
+### Deployment Steps
+
+1. **Setup Supabase Project**
+   ```bash
+   # Create project at https://supabase.com/dashboard
+   # Copy project URL and anon key
+   ```
+
+2. **Deploy Database Schema**
+   ```sql
+   -- Run supabase/migrations/20250106_initial_schema.sql
+   -- Creates users, categories, transactions, bank_statements tables
+   ```
+
+3. **Deploy Edge Functions**
+   ```bash
+   supabase functions deploy api
+   supabase functions deploy pdf-processor  
+   supabase functions deploy google-sheets
+   ```
+
+4. **Configure Environment Variables**
+   - Supabase: Add OpenAI API key, Google OAuth credentials
+   - Vercel: Add Supabase URL and anon key
+
+5. **Deploy Frontend to Vercel**
+   ```bash
+   # Connect GitHub repo to Vercel
+   # Automatic deployments from main branch
+   ```
+
+### Environment Variables
+
+**Supabase Edge Functions:**
+```env
+OPENAI_API_KEY=sk-your-openai-key
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+FRONTEND_URL=https://your-app.vercel.app
+```
+
+**Vercel Frontend:**
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### API Endpoints
+
+The client automatically switches between local development and production:
+- **Development**: Uses local Express server (`/api/*`)
+- **Production**: Uses Supabase Edge Functions (`/functions/v1/*`)
+
+### Edge Functions Overview
+
+- `api` - Main CRUD operations for transactions, categories, stats
+- `pdf-processor` - PDF upload, parsing, and AI categorization  
+- `google-sheets` - OAuth flow and spreadsheet synchronization
+
+See `supabase/README.md` for detailed deployment guide.
 
 ## User Preferences
 
