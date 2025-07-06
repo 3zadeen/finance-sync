@@ -119,6 +119,7 @@ export default function Dashboard() {
             <CategoryBreakdown />
             <GoogleSheetsCard 
               isConnected={googleSheetsStatus?.connected || false}
+              hasSpreadsheetId={!!(googleSheetsStatus?.connected && googleSheetsStatus?.spreadsheetId)}
               onConnect={handleConnectGoogleSheets}
             />
           </div>

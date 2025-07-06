@@ -223,15 +223,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = 1; // Default user for demo
       await storage.updateUserGoogleTokens(userId, accessToken, refreshToken);
 
-      // Create a new spreadsheet
-      const spreadsheetId = await googleSheetsService.createSpreadsheet(accessToken, "Personal Finance - FinanceFlow");
-      await storage.updateUserSheetsId(userId, spreadsheetId);
-
+      // Don't create a new spreadsheet, just store the tokens
+      // User will provide their existing spreadsheet ID later
+      
       // Redirect back to dashboard
       res.redirect("/?google-connected=true");
     } catch (error) {
       console.error('Google OAuth callback error:', error);
       res.redirect("/?google-error=true");
+    }
+  });
+
+  // Set existing spreadsheet ID
+  app.post("/api/set-spreadsheet-id", async (req, res) => {
+    try {
+      const { spreadsheetId } = req.body;
+      if (!spreadsheetId) {
+        return res.status(400).json({ message: "Spreadsheet ID is required" });
+      }
+
+      const userId = 1; // Default user for demo
+      const user = await storage.getUser(userId);
+      
+      if (!user?.googleAccessToken) {
+        return res.status(400).json({ message: "Google account not connected" });
+      }
+
+      // Verify the spreadsheet exists and we have access
+      try {
+        await googleSheetsService.verifySpreadsheetAccess(user.googleAccessToken, spreadsheetId);
+        await storage.updateUserSheetsId(userId, spreadsheetId);
+        res.json({ message: "Spreadsheet connected successfully" });
+      } catch (error) {
+        res.status(400).json({ message: "Cannot access spreadsheet. Please check the ID and permissions." });
+      }
+    } catch (error) {
+      res.status(500).json({ message: error.message });
     }
   });
 
@@ -277,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       
       res.json({
-        connected: !!(user?.googleAccessToken && user?.googleSheetsId),
+        connected: !!user?.googleAccessToken,
         spreadsheetId: user?.googleSheetsId || null,
       });
     } catch (error) {

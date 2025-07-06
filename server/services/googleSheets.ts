@@ -15,23 +15,59 @@ export class GoogleSheetsService {
       const auth = new google.auth.OAuth2();
       auth.setCredentials({ access_token: accessToken });
 
-      // Prepare data for sheets
-      const values = [
-        ['Date', 'Description', 'Amount', 'Category'], // Header row
-        ...transactions.map(t => [t.date, t.description, t.amount, t.category])
-      ];
+      // First, check if the sheet has headers
+      let hasHeaders = false;
+      try {
+        const existingData = await this.sheets.spreadsheets.values.get({
+          auth,
+          spreadsheetId,
+          range: 'A1:D1',
+        });
+        
+        if (existingData.data.values && existingData.data.values.length > 0) {
+          const firstRow = existingData.data.values[0];
+          hasHeaders = firstRow.includes('Date') && firstRow.includes('Description') && firstRow.includes('Amount') && firstRow.includes('Category');
+        }
+      } catch (error) {
+        // Sheet might be empty, that's ok
+      }
 
-      // Clear existing data and add new data
-      await this.sheets.spreadsheets.values.clear({
-        auth,
-        spreadsheetId,
-        range: 'Sheet1!A:D',
-      });
+      // Prepare data for sheets
+      let values: string[][];
+      if (!hasHeaders) {
+        // Add headers if they don't exist
+        values = [
+          ['Date', 'Description', 'Amount', 'Category'], // Header row
+          ...transactions.map(t => [t.date, t.description, t.amount, t.category])
+        ];
+      } else {
+        // Just add transaction data
+        values = transactions.map(t => [t.date, t.description, t.amount, t.category]);
+      }
+
+      if (values.length === 0) return;
+
+      // Find the next empty row to append data
+      let nextRow = 1;
+      if (hasHeaders) {
+        try {
+          const existingData = await this.sheets.spreadsheets.values.get({
+            auth,
+            spreadsheetId,
+            range: 'A:A',
+          });
+          nextRow = (existingData.data.values?.length || 0) + 1;
+        } catch (error) {
+          nextRow = 2; // Start after header row
+        }
+      }
+
+      const range = hasHeaders ? `A${nextRow}:D${nextRow + values.length - 1}` : 'A1:D' + values.length;
 
       await this.sheets.spreadsheets.values.update({
         auth,
         spreadsheetId,
-        range: 'Sheet1!A1',
+        range,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
           values,
@@ -86,6 +122,21 @@ export class GoogleSheetsService {
       access_type: 'offline',
       scope: scopes,
     });
+  }
+
+  async verifySpreadsheetAccess(accessToken: string, spreadsheetId: string): Promise<void> {
+    try {
+      const auth = new google.auth.OAuth2();
+      auth.setCredentials({ access_token: accessToken });
+
+      // Try to read the spreadsheet properties to verify access
+      await this.sheets.spreadsheets.get({
+        auth,
+        spreadsheetId,
+      });
+    } catch (error) {
+      throw new Error(`Cannot access spreadsheet: ${error.message}`);
+    }
   }
 
   async exchangeCodeForTokens(code: string): Promise<{ accessToken: string; refreshToken: string }> {
