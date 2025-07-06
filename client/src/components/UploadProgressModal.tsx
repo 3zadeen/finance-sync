@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface UploadProgressModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface UploadProgressModalProps {
 export default function UploadProgressModal({ isOpen, onClose }: UploadProgressModalProps) {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
 
   const steps = [
     { label: "Parsing PDF content", icon: "fas fa-file-pdf" },
@@ -21,6 +23,7 @@ export default function UploadProgressModal({ isOpen, onClose }: UploadProgressM
     if (isOpen) {
       setProgress(0);
       setCurrentStep(0);
+      setIsComplete(false);
       
       // Simulate processing steps
       const timer = setInterval(() => {
@@ -38,59 +41,92 @@ export default function UploadProgressModal({ isOpen, onClose }: UploadProgressM
           
           if (newProgress >= 100) {
             clearInterval(timer);
-            setTimeout(() => {
-              onClose();
-            }, 1000);
+            setIsComplete(true);
             return 100;
           }
           
           return newProgress;
         });
-      }, 60); // Complete in ~3.6 seconds
+      }, 80); // Complete in ~4.8 seconds
 
       return () => clearInterval(timer);
     }
-  }, [isOpen, onClose, currentStep]);
+  }, [isOpen, currentStep]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
+        <DialogTitle className="sr-only">Processing Bank Statement</DialogTitle>
+        <DialogDescription className="sr-only">
+          AI is processing your uploaded bank statement and categorizing transactions
+        </DialogDescription>
+        
         <div className="text-center">
           <div className="w-16 h-16 bg-primary bg-opacity-10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-file-pdf text-primary text-2xl"></i>
+            <i className={`fas ${isComplete ? 'fa-check text-success' : 'fa-file-pdf text-primary'} text-2xl`}></i>
           </div>
           
-          <h3 className="text-lg font-semibold text-neutral-800 mb-2">Processing Bank Statement</h3>
-          <p className="text-neutral-600 text-sm mb-6">AI is categorizing your transactions...</p>
+          <h3 className="text-lg font-semibold text-neutral-800 mb-2">
+            {isComplete ? 'Processing Complete!' : 'Processing Bank Statement'}
+          </h3>
+          <p className="text-neutral-600 text-sm mb-6">
+            {isComplete 
+              ? 'Your transactions have been categorized and are ready to view.' 
+              : 'AI is categorizing your transactions...'
+            }
+          </p>
           
           {/* Progress Bar */}
           <div className="w-full bg-neutral-200 rounded-full h-2 mb-4">
             <div 
-              className="bg-primary h-2 rounded-full transition-all duration-300"
+              className={`h-2 rounded-full transition-all duration-300 ${
+                isComplete ? 'bg-success' : 'bg-primary'
+              }`}
               style={{ width: `${progress}%` }}
             ></div>
           </div>
           
           {/* Processing Steps */}
-          <div className="space-y-2 text-sm text-left">
+          <div className="space-y-2 text-sm text-left mb-6">
             {steps.map((step, index) => (
               <div key={index} className="flex items-center space-x-2">
                 <i className={`${
-                  index < currentStep ? "fas fa-check text-success" :
-                  index === currentStep ? `${step.icon} text-primary` :
+                  (isComplete && index <= 3) || index < currentStep ? "fas fa-check text-success" :
+                  index === currentStep && !isComplete ? `${step.icon} text-primary` :
                   "fas fa-clock text-neutral-400"
                 }`}></i>
                 <span className={
-                  index <= currentStep ? "text-neutral-600" : "text-neutral-400"
+                  (isComplete && index <= 3) || index <= currentStep ? "text-neutral-600" : "text-neutral-400"
                 }>
                   {step.label}
                 </span>
-                {index === currentStep && (
+                {index === currentStep && !isComplete && (
                   <i className="fas fa-spinner fa-spin text-primary ml-auto"></i>
                 )}
               </div>
             ))}
           </div>
+
+          {/* Close Button */}
+          {isComplete && (
+            <Button 
+              onClick={onClose}
+              className="w-full bg-primary hover:bg-primary-dark text-white"
+            >
+              View Transactions
+            </Button>
+          )}
+          
+          {/* Cancel Button for ongoing process */}
+          {!isComplete && (
+            <Button 
+              variant="outline"
+              onClick={onClose}
+              className="w-full border-neutral-200 text-neutral-600 hover:text-neutral-800"
+            >
+              Close
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

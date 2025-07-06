@@ -92,6 +92,21 @@ This is a full-stack financial transaction management application that automates
 - **OpenAI**: API key configuration for AI services
 - **Google**: OAuth credentials for Sheets integration
 
+## Recent Changes
+
+### July 06, 2025 - Google Sheets Integration Enhancement
+- Modified Google Sheets integration to work with existing spreadsheets instead of creating new ones
+- Added spreadsheet ID input field in dashboard for connecting to user's existing sheets
+- Updated sync functionality to append data rather than overwriting existing content
+- Added verification system to ensure spreadsheet access before connection
+- Implemented multi-step connection process: Google OAuth → Spreadsheet ID → Data Sync
+
+### July 06, 2025 - Upload Modal Improvements  
+- Fixed dialog accessibility issues by adding proper DialogTitle and DialogDescription
+- Enhanced upload progress modal with completion states and user controls
+- Added close buttons for better user experience during and after upload
+- Improved modal responsiveness and prevented stuck states
+
 ## Changelog
 - July 06, 2025. Initial setup
 
