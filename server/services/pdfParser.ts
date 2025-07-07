@@ -14,10 +14,14 @@ export class PDFParser {
       const data = await PDFParse(pdfBuffer);
       const text = data.text;
       
+      console.log('Extracted PDF text:', text.substring(0, 500) + '...');
+      
       // Parse transactions from PDF text
       const transactions = this.extractTransactions(text);
+      console.log('Parsed transactions:', transactions.length);
       return transactions;
     } catch (error) {
+      console.error('PDF parse error:', error);
       throw new Error(`Failed to parse PDF: ${error.message}`);
     }
   }

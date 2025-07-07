@@ -102,6 +102,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Upload bank statement
   app.post("/api/upload-statement", upload.single('file'), async (req, res) => {
     try {
+      console.log('Upload request received:', {
+        hasFile: !!req.file,
+        filename: req.file?.originalname,
+        size: req.file?.size,
+        mimetype: req.file?.mimetype
+      });
+      
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }

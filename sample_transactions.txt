@@ -1,0 +1,10 @@
+BANK STATEMENT
+Account Number: 12345678
+
+Date        Description                    Amount
+01/15/2024  GROCERY STORE PURCHASE        -45.67
+01/16/2024  SALARY DEPOSIT               +2500.00
+01/17/2024  GAS STATION PURCHASE          -32.50
+01/18/2024  RESTAURANT DINNER             -78.90
+01/19/2024  ATM WITHDRAWAL                -100.00
+01/20/2024  ONLINE SHOPPING               -156.78

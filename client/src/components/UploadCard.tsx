@@ -41,6 +41,9 @@ export default function UploadCard({ onUploadStart }: UploadCardProps) {
         ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdf-processor`
         : '/api/upload-statement';
       
+      console.log('Upload URL:', uploadUrl);
+      console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+      
       const headers: Record<string, string> = {};
       if (import.meta.env.VITE_SUPABASE_ANON_KEY) {
         headers["apikey"] = import.meta.env.VITE_SUPABASE_ANON_KEY;
